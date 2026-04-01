@@ -64,4 +64,52 @@ describe('Routes', () => {
     expect(recipe).toBeDefined();
     expect(recipe.title).toBe(newRecipe.title);
   });
+
+  test('DELETE /recipes/:id should delete a recipe and subsequent GET should return 404', async () => {
+    // Insert a recipe to delete
+    const result = await db.run(
+      'INSERT INTO recipes (title, ingredients, method) VALUES (?, ?, ?)',
+      ['Recipe to Delete', 'Some ingredients', 'Some method']
+    );
+    const recipeId = result.lastID;
+
+    // Confirm the recipe exists
+    const beforeDelete = await request(app).get(`/recipes/${recipeId}`);
+    expect(beforeDelete.status).toBe(200);
+
+    // Delete the recipe
+    const deleteResponse = await request(app).delete(`/recipes/${recipeId}`);
+    expect(deleteResponse.status).toBe(302);
+
+    // Subsequent GET should return 404
+    const afterDelete = await request(app).get(`/recipes/${recipeId}`);
+    expect(afterDelete.status).toBe(404);
+  });
+
+  test('POST /recipes should return 400 if title is empty', async () => {
+    const response = await request(app)
+      .post('/recipes')
+      .send({ title: '', ingredients: 'Some ingredients', method: 'Some method' });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe('Title is required');
+  });
+
+  test('POST /recipes should return 400 if title is missing', async () => {
+    const response = await request(app)
+      .post('/recipes')
+      .send({ ingredients: 'Some ingredients', method: 'Some method' });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe('Title is required');
+  });
+
+  test('POST /recipes should return 400 if title is whitespace only', async () => {
+    const response = await request(app)
+      .post('/recipes')
+      .send({ title: '   ', ingredients: 'Some ingredients', method: 'Some method' });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe('Title is required');
+  });
 });

@@ -17,12 +17,29 @@ router.get('/recipes/:id', async (req, res) => {
 	const db = await getDbConnection()
 	const recipeId = req.params.id
 	const recipe = await db.get('SELECT * FROM recipes WHERE id = ?', [recipeId])
+	if (!recipe) {
+		return res.status(404).render('recipe', { recipe: null })
+	}
 	res.render('recipe', { recipe })
 })
 
-router.post('/recipes', async (req, res) => {
+router.delete('/recipes/:id', async (req, res) => {
 	const db = await getDbConnection()
+	const recipeId = req.params.id
+	const recipe = await db.get('SELECT * FROM recipes WHERE id = ?', [recipeId])
+	if (!recipe) {
+		return res.status(404).json({ error: 'Recipe not found' })
+	}
+	await db.run('DELETE FROM recipes WHERE id = ?', [recipeId])
+	res.redirect('/recipes')
+})
+
+router.post('/recipes', async (req, res) => {
 	const { title, ingredients, method } = req.body
+	if (!title || !String(title).trim()) {
+		return res.status(400).json({ error: 'Title is required' })
+	}
+	const db = await getDbConnection()
 	await db.run('INSERT INTO recipes (title, ingredients, method) VALUES (?, ?, ?)', [title, ingredients, method])
 	res.redirect('/recipes')
 })
