@@ -85,4 +85,31 @@ describe('Routes', () => {
     const afterDelete = await request(app).get(`/recipes/${recipeId}`);
     expect(afterDelete.status).toBe(404);
   });
+
+  test('POST /recipes should return 400 if title is empty', async () => {
+    const response = await request(app)
+      .post('/recipes')
+      .send({ title: '', ingredients: 'Some ingredients', method: 'Some method' });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe('Title is required');
+  });
+
+  test('POST /recipes should return 400 if title is missing', async () => {
+    const response = await request(app)
+      .post('/recipes')
+      .send({ ingredients: 'Some ingredients', method: 'Some method' });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe('Title is required');
+  });
+
+  test('POST /recipes should return 400 if title is whitespace only', async () => {
+    const response = await request(app)
+      .post('/recipes')
+      .send({ title: '   ', ingredients: 'Some ingredients', method: 'Some method' });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe('Title is required');
+  });
 });
